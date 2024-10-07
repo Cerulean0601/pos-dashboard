@@ -1,9 +1,8 @@
 import { Dropbox } from 'dropbox';
 
-const APP_KEY = 'rq1ugo8ap9nctcv';
+const APP_KEY = process.env.VUE_APP_DROPBOX_KEY;
 
-// 設置Dropbox登入後的重定向 URI，如果要修改，需要連同Dropbox的後台一起修改
-const REDIRECT_URI = 'http://localhost:8080/handleToken/'; 
+const REDIRECT_URI = process.env.VUE_APP_REDIRECT_URI;
 
 export const isDropboxAuth = () => {
     const localToken = localStorage.getItem('dropbox_access_token');
@@ -24,6 +23,7 @@ export const handleDropboxAuth = () => {
   
   export const dropboxSignin = () => {
     var dbx = new Dropbox({ clientId: APP_KEY });
+    console.log(process.env)
     dbx.auth.getAuthenticationUrl(REDIRECT_URI)
       .then((authUrl) => {
         // 讓使用者跳轉到 Dropbox 的登入頁面

@@ -38,7 +38,7 @@ const sales = {
     bounce: "32.14%",
     flag: BR,
   },
-};
+}
 </script>
 <template>
   <div class="py-4 container-fluid">

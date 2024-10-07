@@ -1,18 +1,4 @@
 {
-  "name": "vue-argon-dashboard-2",
-  "version": "4.0.0",
-  "private": true,
-  "author": "Creative Tim",
-  "license": "SEE LICENSE IN <https://www.creative-tim.com/license>",
-  "description": "VueJS version of Argon Dashboard 2 by Creative Tim",
-  "homepage": "https://demos.creative-tim.com/vue-argon-dashboard/",
-  "bugs": {
-    "url": "https://github.com/creativetimofficial/vue-argon-dashboard/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/creativetimofficial/vue-argon-dashboard.git"
-  },
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "cross-env CI=false; cross-env PUBLIC_URL=/ vue-cli-service build",
@@ -21,6 +7,8 @@
   },
   "dependencies": {
     "@popperjs/core": "2.11.8",
+    "@vercel/functions": "^1.4.1",
+    "@vercel/kv": "^3.0.0",
     "bootstrap": "5.3.3",
     "chart.js": "4.4.1",
     "core-js": "3.36.0",
