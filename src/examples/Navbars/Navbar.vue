@@ -36,7 +36,7 @@ const toggleConfigurator = () => store.commit("toggleConfigurator");
         :current-directory="currentDirectory"
       />
 
-      <div class="mt-2 collapse navbar-collapse mt-sm-0 me-md-0 me-sm-4 justify-content-end" id="navbar">
+      <div class="mt-2 collapse navbar-collapse mt-sm-0 me-md-0 me-sm-4 ms-4 justify-content-end" id="navbar">
         <ul class="navbar-nav">
           <li class="nav-item d-flex align-items-center">
             <a

@@ -1,6 +1,8 @@
-// export const config = {
-//   runtime: 'nodejs', // this is a pre-requisite
-// };
-export default function handler(req, res) {
-  res.status(200).json({ message: 'Hello from Vercel!' });
+import { sql } from '@/db';
+ 
+export const dynamic = 'force-dynamic';
+ 
+export async function GET() {
+  await sql.query(`INSERT INTO ProductCategory (CategoryName) VALUES ('客製品');`);
+  return Response.json({ success: true });
 }

@@ -23,7 +23,6 @@ export const handleDropboxAuth = () => {
   
   export const dropboxSignin = () => {
     var dbx = new Dropbox({ clientId: APP_KEY });
-    console.log(process.env)
     dbx.auth.getAuthenticationUrl(REDIRECT_URI)
       .then((authUrl) => {
         // 讓使用者跳轉到 Dropbox 的登入頁面

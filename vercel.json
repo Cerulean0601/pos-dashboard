@@ -1,0 +1,9 @@
+{
+    "routes": [
+      {
+        "src": "/api/postgres/",
+        "dest": "/api/postgres/",
+        "methods": ["GET"]
+      }
+    ]
+  }
