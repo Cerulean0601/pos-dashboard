@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Dashboard from "../views/Dashboard.vue";
-import Tables from "../views/Tables.vue";
+import Products from "../views/Products.vue";
 import Billing from "../views/Billing.vue";
 import HandleToken from "../views/HandleToken.vue";
 import Signup from "../views/Signup.vue";
@@ -21,9 +21,9 @@ const routes = [
     component: Dashboard,
   },
   {
-    path: "/tables",
-    name: "Tables",
-    component: Tables,
+    path: "/products",
+    name: "Products",
+    component: Products,
   },
   {
     path: "/billing",

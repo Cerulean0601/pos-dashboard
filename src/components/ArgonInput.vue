@@ -31,7 +31,7 @@ defineProps({
     default: "",
   },
   modelValue: {
-    type: String,
+    type: [String, Number],
     default: "",
   },
   placeholder: {
@@ -84,7 +84,7 @@ const hasIcon = (icon) => (icon ? "input-group" : null);
         :name="name"
         :value="modelValue"
         :placeholder="placeholder"
-        :isRequired="isRequired"
+        :required="isRequired"
         :readonly="isReadonly"
         @input="emit('update:modelValue', $event.target.value)"
       />
