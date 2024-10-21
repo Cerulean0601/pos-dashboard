@@ -32,9 +32,9 @@ const getRoute = () => {
 
       <li class="nav-item">
         <sidenav-item
-          to="/prodcut"
-          :class="getRoute() === 'tables' ? 'active' : ''"
-          :navText="'Tables'"
+          to="/prodcuts"
+          :class="getRoute() === 'products' ? 'active' : ''"
+          :navText="'Products'"
         >
           <template v-slot:icon>
             <i

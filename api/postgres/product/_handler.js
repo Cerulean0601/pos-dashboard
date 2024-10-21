@@ -76,7 +76,7 @@ export async function deleteMultiRows(productIDs) {
   })
   .join(",")
   const query = `DELETE FROM "Product" WHERE "ProductID" IN (${placeholder})`;
-  console.log(query);
+  
   return await sql.query(query, productIDs);
 
 }
