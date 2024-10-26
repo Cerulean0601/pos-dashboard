@@ -1,6 +1,7 @@
 <script setup>
 import ArgonInput from '../../components/ArgonInput.vue';
 import ArgonButton from '../../components/ArgonButton.vue';
+import { fetchCategories, fetchAndCache } from '../../utils/fetchData';
 </script>
 
 <template>
@@ -61,16 +62,6 @@ export default {
     };
   },
   methods: {
-    async fetchCategories() {
-      try {
-        const response = await fetch('/api/postgres/category/categories');
-        const data = await response.json();
-        this.origin_data = data;
-        this.items = JSON.parse(JSON.stringify(data));
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    },
     addItem() {
       const newId = this.items.length ? this.items[this.items.length - 1].ProductID + 1 : 1;
       const newItem = { CategoryID: newId, ...this.newItem};
@@ -129,7 +120,10 @@ export default {
     },
   },
   mounted() {
-    this.fetchCategories();
+    (async () => {
+      this.origin_data = await fetchAndCache(fetchCategories, "categories");
+      this.items = JSON.parse(JSON.stringify(this.origin_data));
+    })();
   },
 };
 </script>

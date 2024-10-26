@@ -32,7 +32,7 @@ const getRoute = () => {
 
       <li class="nav-item">
         <sidenav-item
-          to="/prodcuts"
+          to="/products"
           :class="getRoute() === 'products' ? 'active' : ''"
           :navText="'Products'"
         >

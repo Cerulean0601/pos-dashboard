@@ -2,6 +2,7 @@
 import ArgonInput from '../../components/ArgonInput.vue';
 import ArgonButton from '../../components/ArgonButton.vue';
 import SelfSelect from '../../components/SelfSelect.vue';
+import { fetchProducts, fetchCategories, fetchAndCache } from '../../utils/fetchData';
 </script>
 
 <template>
@@ -75,32 +76,17 @@ export default {
     };
   },
   methods: {
-    async fetchItems() {
-      try {
-        const response = await fetch('/api/postgres/product/products');
-        const data = await response.json();
-        // const data = [
-        //   {
-        //     ProductID: 1,
-        //     ProductName: 'test',
-        //     CategoryName: 'test',
-        //     Price: 22,
-        //   }
-        // ]
-        this.origin_data = data; // 將資料儲存到 origin_data
-        this.items = JSON.parse(JSON.stringify(data)); // 複製一份資料以便於修改
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
+    refreshProducts() {
+      (async () => {
+        this.origin_data = await fetchAndCache(fetchProducts, "products");
+        this.items = JSON.parse(JSON.stringify(this.origin_data));
+      })();
     },
-    async fetchCategories() {
-      try {
-        const response = await fetch('/api/postgres/category/categories');
-        const data = await response.json();
-        this.categories = data.map(category => {return category.CategoryName}); // 將類別數據保存到 categories 中
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
+    refreshCategories() {
+      (async () => {
+        const categories = await fetchAndCache(fetchCategories, "categories");
+        this.categories = categories.map((category) => {return category.CategoryName});
+      })();
     },
     addItem() {
       const newId = this.items.length ? this.items[this.items.length - 1].ProductID + 1 : 1;
@@ -154,7 +140,8 @@ export default {
           alert('變更成功');
           // 清空待提交的變更
           this.pendingChanges = { update: [], remove: [], add: [] }; 
-          this.fetchItems(); // 重新獲取資料以更新顯示
+          localStorage.removeItem("products");
+          this.refreshProducts(); // 重新獲取資料以更新顯示
         })
         .catch(error => {
           console.error('推送變更時出錯:', error);
@@ -162,8 +149,8 @@ export default {
     },
   },
   mounted() {
-    this.fetchItems(); // 頁面加載時獲取資料
-    this.fetchCategories();
+    this.refreshProducts();
+    this.refreshCategories();
   },
 };
 </script>

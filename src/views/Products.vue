@@ -29,7 +29,7 @@ const activeTab = ref('categoryManager'); // 預設顯示 ProductManager
               @click="activeTab = 'projectsTable'"
               role="tab"
             >
-              專案表格
+              類別管理
             </a>
           </li>
         </ul>
