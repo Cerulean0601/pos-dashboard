@@ -2,11 +2,10 @@ import { createRouter, createWebHistory } from "vue-router";
 import Dashboard from "../views/Dashboard.vue";
 import Products from "../views/Products.vue";
 import Billing from "../views/Billing.vue";
-import HandleToken from "../views/HandleToken.vue";
 import Signup from "../views/Signup.vue";
 import Profile from "../views/Profile.vue";
 import Order from "../views/Order.vue";
-
+import Performance from "../views/Performance.vue";
 import IconFont from "../views/test/IconFont.vue";
 import ListDropboxFile from "../views/test/ListDropboxFiles.vue";
 const routes = [
@@ -41,14 +40,14 @@ const routes = [
     component: Signup,
   },
   {
-    path: "/handleToken",
-    name: "HandleToken",
-    component: HandleToken,
-  },
-  {
     path: "/order",
     name: "Order",
     component: Order,
+  },
+  {
+    path: "/performance",
+    name: "Performance",
+    component: Performance,
   },
 ];
 // 只在開發環境中添加 /test 路由

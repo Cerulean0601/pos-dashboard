@@ -28,3 +28,13 @@ export async function fetchProducts() {
 		console.error('Error fetching products:', error);
 	}
 }
+
+export async function fetchLoactions() {
+	try {
+		const response = await fetch('/api/postgres/location/locations');
+		const data = await response.json()
+		return data;
+	} catch (error) {
+		console.error('Error fetching locations:', error);
+	}
+}
