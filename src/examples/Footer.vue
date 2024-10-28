@@ -1,10 +1,10 @@
 <script setup>
-import { useStore } from "vuex";
-const store = useStore();
+// import { useStore } from "vuex";
+// const store = useStore();
 </script>
 <template>
   <footer class="py-3 footer">
-    <div class="container-fluid">
+    <!-- <div class="container-fluid">
       <div class="row align-items-center justify-content-lg-between">
         <div class="mb-4 col-lg-6 mb-lg-0">
           <div
@@ -62,6 +62,6 @@ const store = useStore();
           </ul>
         </div>
       </div>
-    </div>
+    </div> -->
   </footer>
 </template>

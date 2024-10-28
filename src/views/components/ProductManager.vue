@@ -76,13 +76,13 @@ export default {
     };
   },
   methods: {
-    refreshProducts() {
+    fetchAndCacheProducts() {
       (async () => {
         this.origin_data = await fetchAndCache(fetchProducts, "products");
         this.items = JSON.parse(JSON.stringify(this.origin_data));
       })();
     },
-    refreshCategories() {
+    fetchAndCacheCategories() {
       (async () => {
         const categories = await fetchAndCache(fetchCategories, "categories");
         this.categories = categories.map((category) => {return category.CategoryName});
@@ -141,7 +141,7 @@ export default {
           // 清空待提交的變更
           this.pendingChanges = { update: [], remove: [], add: [] }; 
           localStorage.removeItem("products");
-          this.refreshProducts(); // 重新獲取資料以更新顯示
+          this.refreshProducts();
         })
         .catch(error => {
           console.error('推送變更時出錯:', error);
@@ -149,8 +149,8 @@ export default {
     },
   },
   mounted() {
-    this.refreshProducts();
-    this.refreshCategories();
+    this.fetchAndCacheProducts();
+    this.fetchAndCacheCategories();
   },
 };
 </script>
