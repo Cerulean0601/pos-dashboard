@@ -4,32 +4,32 @@ import ArgonInput from "@/components/ArgonInput.vue";
 import ArgonButton from "@/components/ArgonButton.vue";
 import TypingHints from "@/components/TypingHints.vue";
 import { fetchLoactions } from '../utils/fetchData';
-import { useRouter } from 'vue-router';
+// import { useRouter } from 'vue-router';
 
-const router = useRouter();
+// const router = useRouter();
 const locations = ref([]);
+const selectLocationID = ref(null);
 const performanceStartTime = ref(null); // 紀錄表演開始時間
 const elapsedTime = ref(null); // 已進行時間
 const isPerformanceStarted = ref(false); // 判斷表演是否已開始
 let intervalId = null; // 計時器的 ID
 
-// 從 localStorage 恢復狀態
 const restorePerformanceState = () => {
   const savedData = JSON.parse(localStorage.getItem("Performance"));
-  if (savedData && savedData.startTime) {
-    performanceStartTime.value = new Date(savedData.startTime);
+  if (savedData && savedData.StartTime) {
+    performanceStartTime.value = new Date(savedData.StartTime);
     isPerformanceStarted.value = true;
     startElapsedTimeCounter(); // 開始計時器
   }
 };
 
 onMounted(async () => {
-  const data = await fetchLoactions();
-  locations.value = data
-    .sort((a, b) => b.LocationID - a.LocationID)
-    .map(location => location.LocationName);
-
-  restorePerformanceState(); // 檢查並恢復表演狀態
+  try {
+    locations.value = await fetchLoactions();
+    restorePerformanceState(); // 檢查並恢復表演狀態
+  } catch (error) {
+    console.error("加載地點時出錯:", error);
+  }
 });
 
 const startElapsedTimeCounter = () => {
@@ -44,47 +44,74 @@ const startElapsedTimeCounter = () => {
 
 const inputText = ref('');
 const filteredLocations = computed(() =>
-  locations.value.filter(location => location?.toLowerCase().includes(inputText.value.toLowerCase()))
+  locations.value.map(location => location.LocationName)
+    .filter(location => location?.toLowerCase().includes(inputText.value.toLowerCase()))
 );
 
-const insertLocation = () => {
-  if (inputText.value && !locations.value.includes(inputText.value)) {
-    fetch('/api/postgres/location/insert', {
-      method: 'POST',
-      body: inputText.value
-    })
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        alert('新增成功');
-      })
-      .catch(error => {
-        console.error('推送變更時出錯:', error);
+const insertLocation = async () => {
+  if (inputText.value && !locations.value.map(location => location.LocationName).includes(inputText.value)) {
+    try {
+      const response = await fetch('/api/postgres/location/insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ LocationName: inputText.value }) // 確保傳送的是對象
       });
-
-    locations.value.push(inputText.value);
-    inputText.value = ''; // 新增後清空輸入框
+      
+      if (!response.ok) throw new Error('Network response was not ok');
+      
+      const data = await response.json();
+      alert('新增成功');
+      selectLocationID.value = data.LocationID;
+      inputText.value = ''; // 新增後清空輸入框
+      
+      // 更新 locations 資料
+      locations.value = await fetchLoactions(); 
+      
+    } catch (error) {
+      console.error('推送變更時出錯:', error);
+    }
   }
 };
 
+
 const selectLocations = (location) => {
   inputText.value = location;
+
+  const selectedLocation = locations.value.find(loc => loc.LocationName === location);
+  if (selectedLocation) {
+    selectLocationID.value = selectedLocation.LocationID;
+  } else {
+    throw new Error("Location Name is not found.");
+  }
 };
 
 const startPerformance = () => {
+
+  const validLocation = locations.value.find(loc => loc.LocationName === inputText.value);
+
+  if(selectLocationID.value === null || !validLocation) {
+    alert("請新增表演地點或從列表中選擇")
+    return;
+  }
+  
   performanceStartTime.value = new Date();
   isPerformanceStarted.value = true;
+
   localStorage.setItem("Performance", JSON.stringify({
-    location: inputText.value,
-    startTime: performanceStartTime.value.toISOString(),
+    LocationID: validLocation.LocationID,
+    LocationName: validLocation.LocationName,
+    StartTime: performanceStartTime.value.toISOString(),
   }));
 
-  startElapsedTimeCounter(); // 開始更新計時
-  router.push("/order");
+  
+  startElapsedTimeCounter();
 };
 
 const endPerformance = () => {
   isPerformanceStarted.value = false;
-  clearInterval(intervalId); // 停止計時器
+  selectLocationID.value = null;
+  if(intervalId)
+    clearInterval(intervalId); // 停止計時器
   localStorage.removeItem("Performance"); // 清除 localStorage 中的狀態
   alert("表演已結束");
 };
@@ -150,6 +177,7 @@ const endPerformance = () => {
           </div>
           <div class="card-body">
             <p>表演開始時間：{{ performanceStartTime?.toLocaleString() }}</p>
+            <p>表演地點: {{ selectLocationID !== null ? locations.find(loc => loc.LocationID === selectLocationID)?.LocationName : '未選擇' }}</p>
             <p>已進行時間：{{ elapsedTime }}</p>
           </div>
         </div>

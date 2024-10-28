@@ -3,8 +3,8 @@ import { sql } from '@vercel/postgres';
 export default async function handler(request, response) {
   try{
     const query = `INSERT INTO "Performance" ("LocationID", "StartTime") VALUES ($1, $2)`;
-    const {LocationID, StartTime} = request.body
-    await sql.query(query, [LocationID, StartTime]);
+    const {LocationName, StartTime} = request.body
+    await sql.query(query, [LocationName, StartTime]);
 
     return response.status(200).json();
   } catch(error) {
