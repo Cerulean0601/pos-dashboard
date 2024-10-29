@@ -86,32 +86,86 @@ const selectLocations = (location) => {
 };
 
 const startPerformance = () => {
-
   const validLocation = locations.value.find(loc => loc.LocationName === inputText.value);
 
-  if(selectLocationID.value === null || !validLocation) {
-    alert("請新增表演地點或從列表中選擇")
+  if (selectLocationID.value === null || !validLocation) {
+    alert("請新增表演地點或從列表中選擇");
     return;
   }
-  
+
   performanceStartTime.value = new Date();
   isPerformanceStarted.value = true;
+  const StartTime = performanceStartTime.value.toISOString();
 
   localStorage.setItem("Performance", JSON.stringify({
     LocationID: validLocation.LocationID,
     LocationName: validLocation.LocationName,
-    StartTime: performanceStartTime.value.toISOString(),
+    StartTime: StartTime,
   }));
 
-  
+  fetch("/api/postgres/performance/start", {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      LocationID: validLocation.LocationID,
+      StartTime: StartTime
+    })
+  })
+  .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json(); // 預期回傳 PerformanceID
+    })
+    .then(data => {
+      console.log("表演開始!");
+      const PerformanceID = data.PerformanceID;
+      localStorage.setItem("Performance", JSON.stringify({
+        LocationID: validLocation.LocationID,
+        LocationName: validLocation.LocationName,
+        StartTime: StartTime,
+        PerformanceID: PerformanceID
+      }));
+    })
+    .catch(error => {
+      console.error('傳送表演開始請求時出錯:', error);
+      performanceStartTime.value = null;
+      isPerformanceStarted.value = false;
+      selectLocationID.value = null;
+      localStorage.removeItem("Performance");
+      alert('操作失敗，已復原表演狀態');
+    });
+
   startElapsedTimeCounter();
 };
 
 const endPerformance = () => {
+  const performanceData = JSON.parse(localStorage.getItem("Performance"));
+  if (!performanceData || !performanceData.PerformanceID) {
+    alert("未找到有效的 PerformanceID，無法結束表演");
+    return;
+  }
+
+  const EndTime = new Date().toISOString();
+
+  fetch("/api/postgres/performance/end", {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      PerformanceID: performanceData.PerformanceID,
+      EndTime: EndTime
+    })
+  })
+    .then(response => {
+      if (!response.ok) throw new Error('Network response was not ok');
+      console.log("表演已結束");
+    })
+    .catch(error => {
+      console.error('傳送表演結束請求時出錯:', error);
+      alert('操作失敗，無法更新結束時間');
+    });
+
   isPerformanceStarted.value = false;
   selectLocationID.value = null;
-  if(intervalId)
-    clearInterval(intervalId); // 停止計時器
+  if (intervalId) clearInterval(intervalId); // 停止計時器
   localStorage.removeItem("Performance"); // 清除 localStorage 中的狀態
   alert("表演已結束");
 };
