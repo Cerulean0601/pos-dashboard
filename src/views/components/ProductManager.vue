@@ -78,13 +78,13 @@ export default {
   methods: {
     fetchAndCacheProducts() {
       (async () => {
-        this.origin_data = await fetchAndCache(fetchProducts, "products");
+        this.origin_data = await fetchAndCache(fetchProducts, "Products");
         this.items = JSON.parse(JSON.stringify(this.origin_data));
       })();
     },
     fetchAndCacheCategories() {
       (async () => {
-        const categories = await fetchAndCache(fetchCategories, "categories");
+        const categories = await fetchAndCache(fetchCategories, "Categories");
         this.categories = categories.map((category) => {return category.CategoryName});
       })();
     },
@@ -140,8 +140,8 @@ export default {
           alert('變更成功');
           // 清空待提交的變更
           this.pendingChanges = { update: [], remove: [], add: [] }; 
-          localStorage.removeItem("products");
-          this.refreshProducts();
+          localStorage.removeItem("Products");
+          this.fetchAndCacheProducts();
         })
         .catch(error => {
           console.error('推送變更時出錯:', error);

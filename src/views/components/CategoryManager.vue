@@ -19,7 +19,7 @@ import { fetchCategories, fetchAndCache } from '../../utils/fetchData';
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in items" :key="item.ProductID">
+            <tr v-for="item in items" :key="item.CategoryID">
               <td>
                 <argon-input v-model="item.CategoryName" placeholder="類別名稱"/>
               </td>
@@ -35,7 +35,7 @@ import { fetchCategories, fetchAndCache } from '../../utils/fetchData';
       </div>
       <div class="card-body">
         <form role="form" @submit.prevent="addItem">
-          <argon-input v-model="newItem.CategoryNameName" placeholder="類別名稱" isRequired/>
+          <argon-input v-model="newItem.CategoryName" placeholder="類別名稱" isRequired/>
           <argon-button type="submit" color="primary">新增類別</argon-button>
           <!-- <button type="submit" class="btn btn-primary mt-2">新增商品</button> -->
         </form>
@@ -64,12 +64,12 @@ export default {
   methods: {
     fetchAndCacheCategories() {
       (async () => {
-        const categories = await fetchAndCache(fetchCategories, "categories");
-        this.categories = categories.map((category) => {return category.CategoryName});
+        this.origin_data = await fetchAndCache(fetchCategories, "Categories");
+        this.items = JSON.parse(JSON.stringify(this.origin_data));
       })();
     },
     addItem() {
-      const newId = this.items.length ? this.items[this.items.length - 1].ProductID + 1 : 1;
+      const newId = this.items.length ? this.items[this.items.length - 1].CategoryID + 1 : 1;
       const newItem = { CategoryID: newId, ...this.newItem};
       this.items.push(newItem); // 僅在組件中添加，不推送到資料庫
       this.pendingChanges.add.push(newItem); // 將新增的資料標記為待新增
@@ -78,15 +78,13 @@ export default {
     removeItem(item) {
       const confirmed = confirm('是否確定刪除？');
       if (!confirmed) return;
-
-      // 檢查 item 是否在 origin_data 中，若存在則標記為刪除
       const index = this.origin_data.findIndex(i => i.CategoryID === item.CategoryID);
       if (index > -1) {
-        this.pendingChanges.remove.push(item); // 若為原始資料，則推入待刪除陣列
+        this.pendingChanges.remove.push(item);
       }
-      // 從 items 中刪除，若是新增商品則從pedningChanges.add中刪除
       this.items = this.items.filter(i => i.CategoryID !== item.CategoryID);
       this.pendingChanges.add = this.pendingChanges.add.filter(i => i.CategoryID !== item.CategoryID);
+      console.log("從列表刪除: ", item.CategoryName);
     },
     confirmChanges() {
       // 收集所有的更新資料
@@ -118,8 +116,8 @@ export default {
           alert('變更成功');
           // 清空待提交的變更
           this.pendingChanges = { update: [], remove: [], add: [] }; 
-          localStorage.removeItem("categories");
-          this.refreshCategories();
+          localStorage.removeItem("Categories");
+          this.fetchAndCacheCategories();
         })
         .catch(error => {
           console.error('推送變更時出錯:', error);

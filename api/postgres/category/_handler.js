@@ -8,16 +8,19 @@ import { sql } from '@vercel/postgres';
  *
  */
 export async function insertMultiRows(categories) {
-  if (!categories || !categories.length) return;
+  if (!categories || categories.length === 0) return;
 
-  const placeholder = categories.map((category, index) => {
-    return `$${index+1}`;
+  const params = [];
+  const placeholder = [];
+
+  categories.forEach((category, i) => {
+    params.push(category.CategoryName);
+    placeholder.push(`($${i + 1})`);
   });
-
-  const insertQuery = `
-    INSERT INTO "Category" ("CategoryName") VALUES (${placeholder.join(', ')})`;
-
-    return await sql`${insertQuery}`;
+  
+  const insertQuery = `INSERT INTO "ProductCategory" ("CategoryName") VALUES ${placeholder.join(", ")}`;
+  console.log(insertQuery, params);
+  return await sql.query(insertQuery, params);
 }
 
 export async function updateMultiRows(categories) {
@@ -28,7 +31,7 @@ export async function updateMultiRows(categories) {
   });
 
   const query = `
-      UPDATE "Category"
+      UPDATE "ProductCategory"
       SET "CategoryName" = $2
       WHERE "CategoryID" = $1`;
       
@@ -50,7 +53,7 @@ export async function deleteMultiRows(categoryIDs) {
     return `$${index + 1}`;
   })
   .join(",");
-  const query = `DELETE FROM "Category" WHERE "CategoryID" IN (${placeholder})`;
+  const query = `DELETE FROM "ProductCategory" WHERE "CategoryID" IN (${placeholder})`;
 
   return await sql.query(query, categoryIDs);
 

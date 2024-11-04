@@ -1,40 +1,29 @@
 export async function fetchAndCache(fetchFunction, storageKey) {
-  let data;
+  let data = null;
   if (localStorage.getItem(storageKey) === null) {
-    data = await fetchFunction();
-    
-    localStorage.setItem(storageKey, JSON.stringify(data));
+		try {
+			const response = await fetchFunction();
+			data = await response.json();
+			if(!response.ok) throw new Error(`Request failed with status ${data}`)
+				
+			localStorage.setItem(storageKey, JSON.stringify(data));
+			return data;
+		} catch (error) {
+			console.error('Error fetching data:', error);
+		}
   } else {
     data = JSON.parse(localStorage.getItem(storageKey));
   }
   return data;
 }
 export async function fetchCategories() {
-	try {
-		const response = await fetch('/api/postgres/category/categories');
-		const data = await response.json();
-		return data;
-	} catch (error) {
-		console.error('Error fetching categories:', error);
-	}
+	return await fetch('/api/postgres/category/categories');
 }
 
 export async function fetchProducts() {
-	try {
-		const response = await fetch('/api/postgres/product/products');
-		const data = await response.json()
-		return data;
-	} catch (error) {
-		console.error('Error fetching products:', error);
-	}
+	return await fetch('/api/postgres/product/products');
 }
 
 export async function fetchLoactions() {
-	try {
-		const response = await fetch('/api/postgres/location/locations');
-		const data = await response.json()
-		return data;
-	} catch (error) {
-		console.error('Error fetching locations:', error);
-	}
+	return await fetch('/api/postgres/location/locations');
 }
