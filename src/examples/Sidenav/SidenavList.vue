@@ -56,6 +56,19 @@ const getRoute = () => {
           </template>
         </sidenav-item>
       </li>
+      <li class="nav-item">
+        <sidenav-item
+          to="/order"
+          :class="getRoute() === 'order' ? 'active' : ''"
+          :navText="'Order'"
+        >
+          <template v-slot:icon>
+            <i
+              class="ni ni-collection text-primary text-sm opacity-10"
+            ></i>
+          </template>
+        </sidenav-item>
+      </li>
     </ul>
   </div>
 </template>

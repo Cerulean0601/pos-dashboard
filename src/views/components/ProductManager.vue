@@ -45,8 +45,8 @@ import { fetchProducts, fetchCategories, fetchAndCache } from '../../utils/fetch
       <div class="card-body">
         <form role="form" @submit.prevent="addItem">
           <argon-input v-model="newItem.ProductName" placeholder="商品名稱" isRequired/>
-          <self-select v-model="newItem.CategoryName" :options="categories"/>
-          <argon-input v-model.number="newItem.Price" type="number" placeholder="價格"/>
+          <self-select v-model="newItem.CategoryName" :options="categories" defaultText="類別" isRequired/>
+          <argon-input v-model.number="newItem.Price" type="number" placeholder="價格" isRequired/>
           <argon-button type="submit" color="primary">新增商品</argon-button>
           <!-- <button type="submit" class="btn btn-primary mt-2">新增商品</button> -->
         </form>

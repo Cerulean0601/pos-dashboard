@@ -1,5 +1,8 @@
-export async function fetchAndCache(fetchFunction, storageKey) {
+export async function fetchAndCache(fetchFunction, storageKey="") {
   let data = null;
+  if (!storageKey) {
+    storageKey = fetchFunction.name.replace(/^fetch/, "");
+  }
   if (localStorage.getItem(storageKey) === null) {
 		try {
 			const response = await fetchFunction();

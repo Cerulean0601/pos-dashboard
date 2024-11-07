@@ -19,7 +19,6 @@ export async function insertMultiRows(categories) {
   });
   
   const insertQuery = `INSERT INTO "ProductCategory" ("CategoryName") VALUES ${placeholder.join(", ")}`;
-  console.log(insertQuery, params);
   return await sql.query(insertQuery, params);
 }
 

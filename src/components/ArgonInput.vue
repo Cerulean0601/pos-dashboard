@@ -1,5 +1,5 @@
 <script setup>
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "focus"]);
 
 defineProps({
   size: {
@@ -87,6 +87,7 @@ const hasIcon = (icon) => (icon ? "input-group" : null);
         :required="isRequired"
         :readonly="isReadonly"
         @input="emit('update:modelValue', $event.target.value)"
+        @focus="emit('focus')"
       />
       <span v-if="iconDir === 'right'" class="input-group-text">
         <i :class="getIcon(icon)"></i>

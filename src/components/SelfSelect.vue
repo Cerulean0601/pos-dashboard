@@ -51,10 +51,15 @@ defineProps({
 			:required="isRequired"
 			@input="emit('update:modelValue', $event.target.value)"
 		>
-		<option value="" selected>{{ defaultText }}</option>
+		<option value="" selected class="placeholder">{{ defaultText }}</option>
 		<option v-for="(option, index) in options" :key="index" :value="option">
 			{{ option }}
 		</option>
 		</select>
   </div>
 </template>
+<style>
+.placeholder {
+  color: #6c757d; /* 或其他顏色 */
+}
+</style>

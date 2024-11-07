@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { db } from '@vercel/postgres';
 
 export default async function handler(request, response) {
   if (request.method !== 'POST') {
@@ -6,34 +6,34 @@ export default async function handler(request, response) {
   }
 
   const { OrderTime, PerformanceID, Notes, OrderProducts } = request.body;
+  const client = await db.connect();
 
   try {
-    // 開啟交易
-    await sql`BEGIN`;
 
-    // 插入訂單資料
-    const orderResult = await sql`
-      INSERT INTO "Order" ("OrderTime", "PerformanceID", "Notes")
-      VALUES (${OrderTime}, ${PerformanceID}, ${Notes})
-      RETURNING "OrderID"
-    `;
+    await client.query('BEGIN');
+
+    const orderResult = await client.query(
+      'INSERT INTO "Order" ("OrderTime", "PerformanceID", "Notes") VALUES ($1, $2, $3) RETURNING "OrderID"',
+      [OrderTime, PerformanceID, Notes]
+    );
     const OrderID = orderResult.rows[0].OrderID;
 
-    // 插入訂單品項資料
-    const placeholder = OrderProducts.map((item, index) => {
-        return `($${index+1}, $${index+2}, $${index+3})`;
-    });
-    const params = OrderProducts.map()
-    await sql`INSERT INTO "OrderItem" ("OrderID", "ProductID", "Quantity")
-                VALUES (${placeholder.join(', ')})`
+    const placeholder = OrderProducts.map((_, index) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`).join(', ');
+    const params = OrderProducts.flatMap(product => [OrderID, product.ProductID, product.Quantity]);
 
-    // 提交交易
-    await sql`COMMIT`;
-    return response.status(200).json({ success: true, message: 'Order submitted successfully', orderID });
+    await client.query(
+      `INSERT INTO "OrderProduct" ("OrderID", "ProductID", "Quantity") VALUES ${placeholder}`,
+      params
+    );
+
+    await client.query('COMMIT');
+    return response.status(200).json({ success: true, message: 'Order submitted successfully', OrderID });
   } catch (error) {
-    // 回滾交易
-    await sql`ROLLBACK`;
+
+    await client.query('ROLLBACK');
     console.error('Database query error:', error);
-    return response.status(500).json({ success: false, message: 'Failed to submit order', error });
+    return response.status(500).json({ success: false, message: 'Failed to submit order', error: error.message });
+  } finally {
+    client.release();
   }
 }
