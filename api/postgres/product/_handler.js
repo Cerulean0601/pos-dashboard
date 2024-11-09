@@ -1,5 +1,4 @@
 import { sql } from '@vercel/postgres';
-import { isValidStr } from '../_utility';
 
 /**
  * 表格結構：

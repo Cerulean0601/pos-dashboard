@@ -1,5 +1,4 @@
 import { sql } from '@vercel/postgres';
-import { executeQuery } from '../_utility';
 
 export default async function handler(request, response) {
   

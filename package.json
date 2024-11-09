@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "cross-env CI=false; cross-env PUBLIC_URL=/ vue-cli-service build",
