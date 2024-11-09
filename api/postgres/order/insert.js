@@ -13,16 +13,16 @@ export default async function handler(request, response) {
     await client.query('BEGIN');
 
     const orderResult = await client.query(
-      'INSERT INTO "Order" ("OrderTime", "PerformanceID", "Notes") VALUES ($1, $2, $3) RETURNING "OrderID"',
+      'INSERT INTO "Order" ("OrderTime", "PerformanceID", "Notes",) VALUES ($1, $2, $3) RETURNING "OrderID"',
       [OrderTime, PerformanceID, Notes]
     );
     const OrderID = orderResult.rows[0].OrderID;
 
-    const placeholder = OrderProducts.map((_, index) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`).join(', ');
-    const params = OrderProducts.flatMap(product => [OrderID, product.ProductID, product.Quantity]);
+    const placeholder = OrderProducts.map((_, index) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3}), $${index * 3 + 4})`).join(', ');
+    const params = OrderProducts.flatMap(product => [OrderID, product.ProductID, product.Quantity, product.Price]);
 
     await client.query(
-      `INSERT INTO "OrderProduct" ("OrderID", "ProductID", "Quantity") VALUES ${placeholder}`,
+      `INSERT INTO "OrderProduct" ("OrderID", "ProductID", "Quantity", "Price") VALUES ${placeholder}`,
       params
     );
 

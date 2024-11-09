@@ -33,6 +33,7 @@ const selectProduct = (product) => {
   if (selectedProductIndex.value !== null) {
     orderProducts.value[selectedProductIndex.value].ProductName = product.ProductName;
     orderProducts.value[selectedProductIndex.value].ProductID = product.ProductID;
+    orderProducts.value[selectedProductIndex.value].Price = product.Price;
     selectedProductIndex.value = null;
     showProductTable.value = false;
   }
@@ -153,20 +154,25 @@ const selectLocations = (loc) => {
             <hr class="horizontal dark" />
             <p class="text-uppercase text-sm">訂單品項</p>
             <div v-for="(orderProduct, index) in orderProducts" :key="index" class="row mb-2">
-              <div class="col-md-6">
-                <label :for="'product-name-' + index" class="form-control-label">商品名稱</label>
-                <argon-input
-                  type="text"
-                  v-model="orderProduct.ProductName"
-                  @focus="() => { selectedProductIndex = index; showProductTable = true; }"
-                />
-              </div>
-              <div class="col-md-6">
-                <label :for="'quantity-' + index" class="form-control-label">數量</label>
-                <argon-input type="number" v-model="orderProduct.Quantity" />
+              <div class="d-flex justify-content-between">
+                <div>
+                  <label :for="'product-name-' + index" class="form-control-label">商品名稱</label>
+                  <argon-input
+                    type="text"
+                    v-model="orderProduct.ProductName"
+                    @focus="() => { selectedProductIndex = index; showProductTable = true; }"
+                  />
+                </div>
+                <div>
+                  <label :for="'quantity-' + index" class="form-control-label">數量</label>
+                  <argon-input type="number" v-model="orderProduct.Quantity" />
+                </div>
+                <div>
+                  <label :for="'price-' + index" class="form-control-label">價格</label>
+                  <argon-input type="number" v-model="orderProduct.Price" />
+                </div>
               </div>
             </div>
-
             <argon-button color="primary" size="sm" @click="addOrderProduct">新增品項</argon-button>
 
             <!-- Product selection table -->
