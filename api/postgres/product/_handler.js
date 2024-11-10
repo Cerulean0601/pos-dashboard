@@ -30,7 +30,7 @@ export async function insertMultiRows(products) {
 
   const queryParams = products.flatMap(product => [
     product.ProductName,
-    product.Price,
+    product.Price === "" ? null : product.Price,
     product.CategoryName,
   ]);
   return await sql.query(insertQuery, queryParams);
@@ -46,7 +46,8 @@ export async function updateMultiRows(products) {
   if(!products || products.length === 0) return;
   
   const params = products.map(product => {
-    return [product.ProductName, product.Price, product.CategoryID, product.ProductID]
+    const price = product.Price === "" ? null : product.Price
+    return [product.ProductName, price, product.CategoryID, product.ProductID]
   });
 
   const query = `

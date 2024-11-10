@@ -1,9 +1,8 @@
-import { insertMultiRows, updateMultiRows, deleteMultiRows } from './_handler';
+import { insertMultiRows, updateMultiRows, deleteMultiRows } from './_handler.js';
 export default async function handler(request, response) {
   // Fetching records for the specific page number returning 10 records per page
   try{
     const {add, update, remove} = request.body;
-    // console.log(add, update, remove);
     await insertMultiRows(add);
     await updateMultiRows(update);
     await deleteMultiRows(remove);
