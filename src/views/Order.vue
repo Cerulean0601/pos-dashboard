@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { format } from 'date-fns';
 import ArgonInput from "@/components/ArgonInput.vue";
 import ArgonButton from "@/components/ArgonButton.vue";
+import ArgonRadio from '../components/ArgonRadio.vue';
 import ProductsTable from './components/ProductsTable.vue';
 import PerformanceSelector from './components/PerformanceSelector.vue';
 import { fetchAndCache, fetchLoactions, fetchProducts, fetchPerformances } from '../utils/fetchData';
@@ -25,6 +26,12 @@ const products = ref(null);
 const showProductTable = ref(false);
 const showPerformanceSelector = ref(false);
 const selectedProductIndex = ref(null);
+const selectedPaymentMethod = ref('');
+const paymentMethods = ref({
+    "crash": "現金",
+    "linepay": "LinePay",
+    "jkopay": "街口支付",
+  });
 
 // 訂單品項資訊
 const orderProducts = ref([
@@ -95,6 +102,7 @@ const submitOrder = async () => {
   const orderData = {
     OrderTime: orderTime.value,
     Notes: notes.value,
+    PaymentMethod: selectedPaymentMethod.value,
     OrderProducts: orderProducts.value,
   };
   
@@ -225,13 +233,32 @@ const countPerformance = (async () => {
                 </div>
               </div>
             </div>
-            <argon-button color="primary" size="sm" @click="addOrderProduct">新增品項</argon-button>
+            <!-- 支付方式 -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="payment-method" class="form-control-label mb-2">支付方式</label>
+                <br>
+                <div v-for="(method, key) in paymentMethods" :key=key role="group" aria-label="Payment method">
+                  <argon-radio 
+                  :id=key name="paymentMethod" 
+                  :value="key" 
+                  :checked="key === 'crash'"
+                  v-model="selectedPaymentMethod">
+                    {{ method }}
+                  </argon-radio>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <argon-button color="primary" size="sm" @click="addOrderProduct">新增品項</argon-button>
+                <argon-button color="success" size="sm" class="ms-auto" @click="submitOrder">提交訂單</argon-button>
+              </div>
+            </div>
 
             <!-- Product selection table -->
             <products-table v-if="showProductTable" @selectProduct="selectProduct" />
-
-            <!-- 提交按鈕 -->
-            <argon-button color="success" size="sm" class="ms-auto" @click="submitOrder">提交訂單</argon-button>
+            
           </div>
         </div>
       </div>

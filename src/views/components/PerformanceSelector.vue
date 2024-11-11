@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, defineProps, defineEmits, watch, onMounted } from 'vue';
 import { performanceName } from '../../utils/utils';
+import ArgonButton from '@/components/ArgonButton.vue';
 
 const props = defineProps({
   show: Boolean,
@@ -53,11 +54,14 @@ const close = () => {
         </div>
         <div class="modal-body">
           <ul class="list-group mb-3">
-            <li v-for="(item, index) in data" :key="index" class="list-group-item py-1">
-						<button class="btn btn-link text-start py-1 w-100" @click="selectPerformance(item)">
-							{{ performanceName(item.StartTime, item.LocationName) }}
-						</button>
-					</li>
+            <li v-for="(item, index) in data" :key="index" class="list-group-item">
+              <argon-button 
+                class="text-start"
+                fullWidth="true"
+                @click="selectPerformance(item)">
+                {{ performanceName(item.StartTime, item.LocationName) }}
+              </argon-button>
+					  </li>
 
           </ul>
           <div class="d-flex justify-content-center">
