@@ -4,28 +4,37 @@ import { format } from 'date-fns';
 import ArgonInput from "@/components/ArgonInput.vue";
 import ArgonButton from "@/components/ArgonButton.vue";
 import ProductsTable from './components/ProductsTable.vue';
-import { fetchAndCache, fetchLoactions, fetchProducts } from '../utils/fetchData';
+import PerformanceSelector from './components/PerformanceSelector.vue';
+import { fetchAndCache, fetchLoactions, fetchProducts, fetchPerformances } from '../utils/fetchData';
 import LocationInput from "@/components/LocationInput.vue"
 
 const orderTime = ref(new Date());
 const timeFormString = format(orderTime.value, "yyyy-MM-dd HH:mm");
-const performance = ref(null);
+const performance = ref({
+        LocationID: null,
+        LocationName: null,
+        StartTime: null,
+        PerformanceID: null,
+        performanceName: ""
+      });
+const numPerformance = ref(0);
 const notes = ref('');
 const locations = ref(null);
 const selectLocationID = ref();
 const products = ref(null);
 const showProductTable = ref(false);
+const showPerformanceSelector = ref(false);
 const selectedProductIndex = ref(null);
 
 // 訂單品項資訊
 const orderProducts = ref([
-  { ProductName: '', ProductID: null, Quantity: 1 },
-  { ProductName: '', ProductID: null, Quantity: 1 }
+  { ProductName: '', ProductID: null, Quantity: 1, Price: null },
+  { ProductName: '', ProductID: null, Quantity: 1, Price: null }
 ]);
 
 // 新增一個品項
 const addOrderProduct = () => {
-  orderProducts.value.push({ ProductName: '', ProductID: null, Quantity: 1 });
+  orderProducts.value.push({ ProductName: '', ProductID: null, Quantity: 1, Price: null });
 };
 
 // 選擇商品並關閉產品選擇表
@@ -36,6 +45,25 @@ const selectProduct = (product) => {
     orderProducts.value[selectedProductIndex.value].Price = product.Price;
     selectedProductIndex.value = null;
     showProductTable.value = false;
+  }
+};
+// 初始化訂單
+const initOrder = () => {
+  orderTime.value = new Date();
+  notes.value = '';
+  orderProducts.value = [
+    { ProductName: '', ProductID: null, Quantity: 1, Price: 0 },
+    { ProductName: '', ProductID: null, Quantity: 1, Price: 0 }
+  ];
+}
+
+// 更新品項總價
+const updateProductTotalPrice = (index) => {
+  const orderProduct = orderProducts.value[index];
+  const updateProdcut = products.value.find(p => p.ProductID === orderProduct.ProductID);
+  
+  if (updateProdcut && updateProdcut.Price !== null) {
+    orderProduct.Price = orderProduct.Quantity * updateProdcut.Price;
   }
 };
 
@@ -87,7 +115,8 @@ const submitOrder = async () => {
     const result = await response.json();
     if (result.success) {
       console.log('Order submitted successfully', result.orderID);
-      alert("新增訂單成功");
+      initOrder();
+      alert("新增訂單成功");    
     } else {
       console.error('Failed to submit order:', result.message);
       alert("訂單新增失敗");
@@ -103,6 +132,7 @@ onMounted(async () => {
     locations.value = await fetchAndCache(fetchLoactions, "Locations");
     products.value = await fetchAndCache(fetchProducts, "Products");
     const performanceData = localStorage.getItem("Performance");
+    numPerformance.value = await countPerformance();
     if (performanceData) {
       performance.value = JSON.parse(performanceData);
     }
@@ -119,6 +149,17 @@ const selectLocations = (loc) => {
     throw new Error("Location Name is not found.");
   }
 };
+
+const countPerformance = (async () => {
+  try{
+    const response = await fetch(`/api/postgres/performance/count`);
+    const rows = await response.json();
+    return parseInt(rows[0].count);
+  } catch (error) {
+    console.error("Error Counting Performance:", error);
+  }
+});
+
 </script>
 
 <template>
@@ -136,6 +177,14 @@ const selectLocations = (loc) => {
               <div class="col-md-6">
                 <label for="order-time" class="form-control-label">訂單時間</label>
                 <argon-input type="datetime-local" :modelValue="timeFormString" />
+                <!-- 表演場次選擇 -->
+                <label for="performance" class="form-control-label">表演場次</label>
+                <argon-input
+                  type="text"
+                  v-model="performance.PerformanceName"
+                  readonly
+                  @click="() => {showPerformanceSelector = true}"
+                />
               </div>
               <div class="col-md-6">
                 <location-input
@@ -165,10 +214,13 @@ const selectLocations = (loc) => {
                 </div>
                 <div>
                   <label :for="'quantity-' + index" class="form-control-label">數量</label>
-                  <argon-input type="number" v-model="orderProduct.Quantity" />
+                  <argon-input
+                    type="number" 
+                    v-model="orderProduct.Quantity" 
+                    @input="() => updateProductTotalPrice(index)"/>
                 </div>
                 <div>
-                  <label :for="'price-' + index" class="form-control-label">價格</label>
+                  <label :for="'price-' + index" class="form-control-label">總價</label>
                   <argon-input type="number" v-model="orderProduct.Price" />
                 </div>
               </div>
@@ -184,5 +236,13 @@ const selectLocations = (loc) => {
         </div>
       </div>
     </div>
+    <!-- 表演場次選擇彈窗 -->
+    <performance-selector
+      :fetchFunction="fetchPerformances"
+      :dataSize="numPerformance"
+      :show="showPerformanceSelector"
+      @update:show="showPerformanceSelector = $event"
+      @select="($event) => {performance = $event;}"
+    />
   </div>
 </template>

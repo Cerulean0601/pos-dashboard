@@ -20,7 +20,7 @@ export default async function handler(request, response) {
 
     const placeholder = OrderProducts.map((_, index) => `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${index * 4 + 4})`).join(', ');
     const params = OrderProducts.flatMap(product => [OrderID, product.ProductID, product.Quantity, product.Price]);
-    console.log(placeholder,params);
+
     await client.query(
       `INSERT INTO "OrderProduct" ("OrderID", "ProductID", "Quantity", "Price") VALUES ${placeholder}`,
       params

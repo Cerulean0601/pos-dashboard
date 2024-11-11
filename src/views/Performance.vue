@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 import LocationInput from "@/components/LocationInput.vue"; // Import the new LocationInput component
 import { fetchLoactions, fetchAndCache } from '../utils/fetchData';
+import { performanceName } from '../utils/utils';
 
 const locations = ref([]);
 const selectLocationID = ref(null);
@@ -88,11 +89,6 @@ const startPerformance = () => {
   isPerformanceStarted.value = true;
   const StartTime = performanceStartTime.value.toISOString();
 
-  localStorage.setItem("Performance", JSON.stringify({
-    LocationID: validLocation.LocationID,
-    LocationName: validLocation.LocationName,
-    StartTime: StartTime,
-  }));
   fetch("/api/postgres/performance/start", {
     method: "POST",
     headers: { 'Content-Type': 'application/json' },
@@ -112,7 +108,8 @@ const startPerformance = () => {
         LocationID: validLocation.LocationID,
         LocationName: validLocation.LocationName,
         StartTime: StartTime,
-        PerformanceID: PerformanceID
+        PerformanceID: PerformanceID,
+        performanceName: performanceName(StartTime, validLocation.LocationName)
       }));
       startElapsedTimeCounter();
     })
