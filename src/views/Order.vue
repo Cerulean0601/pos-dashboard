@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { format } from 'date-fns';
 import ArgonInput from "@/components/ArgonInput.vue";
 import ArgonButton from "@/components/ArgonButton.vue";
@@ -39,6 +39,14 @@ const orderProducts = ref([
   { ProductName: '', ProductID: null, Quantity: 1, Price: null }
 ]);
 
+// 計算訂單總價
+const totalPrice = computed(() => {
+  return orderProducts.value.reduce((total, product) => {
+    // product price 已經是品項的總價，不需要乘上數量
+    return total + (product.Price || 0); 
+  }, 0);
+})
+
 // 新增一個品項
 const addOrderProduct = () => {
   orderProducts.value.push({ ProductName: '', ProductID: null, Quantity: 1, Price: null });
@@ -50,6 +58,7 @@ const selectProduct = (product) => {
     orderProducts.value[selectedProductIndex.value].ProductName = product.ProductName;
     orderProducts.value[selectedProductIndex.value].ProductID = product.ProductID;
     orderProducts.value[selectedProductIndex.value].Price = product.Price;
+    orderProducts.value[selectedProductIndex.value].Quantity = 1;
     selectedProductIndex.value = null;
     showProductTable.value = false;
   }
@@ -59,8 +68,8 @@ const initOrder = () => {
   orderTime.value = new Date();
   notes.value = '';
   orderProducts.value = [
-    { ProductName: '', ProductID: null, Quantity: 1, Price: 0 },
-    { ProductName: '', ProductID: null, Quantity: 1, Price: 0 }
+    { ProductName: '', ProductID: null, Quantity: 1, Price: null },
+    { ProductName: '', ProductID: null, Quantity: 1, Price: null }
   ];
 }
 
@@ -68,7 +77,6 @@ const initOrder = () => {
 const updateProductTotalPrice = (index) => {
   const orderProduct = orderProducts.value[index];
   const updateProdcut = products.value.find(p => p.ProductID === orderProduct.ProductID);
-  
   if (updateProdcut && updateProdcut.Price !== null) {
     orderProduct.Price = orderProduct.Quantity * updateProdcut.Price;
   }
@@ -109,10 +117,8 @@ const submitOrder = async () => {
   if(performance.value){
     if(performance.value.PerformanceID)
       orderData.PerformanceID = performance.value.PerformanceID;
-    else
-      console.error("Failed to read PerformanceID...");
   }
-
+  console.log(orderData);
   try {
     const response = await fetch('/api/postgres/order/insert', {
       method: 'POST',
@@ -190,7 +196,7 @@ const countPerformance = (async () => {
                 <argon-input
                   type="text"
                   v-model="performance.PerformanceName"
-                  readonly
+                  isReadOnly
                   @click="() => {showPerformanceSelector = true}"
                 />
               </div>
@@ -208,7 +214,6 @@ const countPerformance = (async () => {
             </div>
 
             <!-- 訂單品項資訊 -->
-            <hr class="horizontal dark" />
             <p class="text-uppercase text-sm">訂單品項</p>
             <div v-for="(orderProduct, index) in orderProducts" :key="index" class="row mb-2">
               <div class="d-flex justify-content-between">
@@ -225,19 +230,28 @@ const countPerformance = (async () => {
                   <argon-input
                     type="number" 
                     v-model="orderProduct.Quantity" 
-                    @input="() => updateProductTotalPrice(index)"/>
+                    @input="() => updateProductTotalPrice(index)"
+                  />
                 </div>
                 <div>
                   <label :for="'price-' + index" class="form-control-label">總價</label>
-                  <argon-input type="number" v-model="orderProduct.Price" />
+                  <argon-input 
+                    type="number" 
+                    v-model="orderProduct.Price"
+                    @input="orderProduct.Price = $event.target.value === '' ? null : Number($event.target.value)"
+                  />
                 </div>
               </div>
             </div>
             <!-- 支付方式 -->
+            <hr class="horizontal dark" />
             <div class="row mb-3">
+              <div class="col">
+                <label for="totalPrice" class="form-control-label">訂單總價</label>
+                <argon-input type="number" v-model="totalPrice" />
+              </div>
               <div class="col-md-6">
-                <label for="payment-method" class="form-control-label mb-2">支付方式</label>
-                <br>
+                <label for="paymentMethod" class="form-control-label">支付方式</label>
                 <div v-for="(method, key) in paymentMethods" :key=key role="group" aria-label="Payment method">
                   <argon-radio 
                   :id=key name="paymentMethod" 
