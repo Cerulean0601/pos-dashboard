@@ -76,6 +76,52 @@ const insertLocation = async () => {
   }
 };
 
+// Function to delete a location
+const deleteLocation = async () => {
+  const locationName = inputText.value.trim();
+
+  // 檢查場地名稱是否為空
+  if (!locationName) {
+    alert("請輸入要刪除的場地名稱");
+    return;
+  }
+
+  // 檢查場地是否存在於 locations 清單中
+  const locationToDelete = locations.value.find(
+    (location) => location.LocationName === locationName
+  );
+
+  if (!locationToDelete) {
+    alert("場地不存在於清單中，無法刪除");
+    return;
+  }
+
+  // 呼叫 API 刪除場地
+  try {
+    const response = await fetch(`/api/postgres/location/delete`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ LocationID: locationToDelete.LocationID })
+    });
+
+    if (!response.ok){
+      const errorMsg = await response.json()
+      throw new Error(errorMsg.error);
+    } 
+    
+    alert('場地已成功刪除');
+    
+    // 更新 locations 清單並清除當前選取的場地
+    localStorage.removeItem("Locations");
+    locations.value = await fetchAndCache(fetchLoactions, "Locations");
+    selectLocationID.value = null;
+    inputText.value = ''; // 清空輸入框
+  } catch (error) {
+    console.error('Error deleting location:', error);
+    alert("無法刪除場地:", error.message);
+  }
+};
+
 // Function to start the performance
 const startPerformance = () => {
   const validLocation = locations.value.find(loc => loc.LocationName === inputText.value);
@@ -195,6 +241,13 @@ const selectLocations = (location) => {
               @click="insertLocation"
             >
               新增場地
+            </argon-button>
+            <argon-button
+              color="danger"
+              size="sm"
+              @click="deleteLocation"
+            >
+              刪除場地
             </argon-button>
             <argon-button
               color="success"

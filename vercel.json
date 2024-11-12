@@ -3,7 +3,7 @@
       {
         "src": "/api/postgres/",
         "dest": "/api/postgres/",
-        "methods": ["GET", "POST"]
+        "methods": ["GET", "POST", "DELETE", "PUT"]
       }
     ]
   }
