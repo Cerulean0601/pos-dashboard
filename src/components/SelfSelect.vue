@@ -35,7 +35,7 @@ defineProps({
 		default: "",
 	},
   options: {
-    type: Array,
+    type: [Array, Object],
     default: () => [],
   }
 });
@@ -51,10 +51,10 @@ defineProps({
 			:required="isRequired"
 			@input="emit('update:modelValue', $event.target.value)"
 		>
-		<option value="" selected class="placeholder">{{ defaultText }}</option>
-		<option v-for="(option, index) in options" :key="index" :value="option">
-			{{ option }}
-		</option>
+      <option value="" selected class="placeholder">{{ defaultText }}</option>
+      <option v-for="(value, key) in options" :key="key" :value="key">
+        {{ value }}
+      </option>
 		</select>
   </div>
 </template>

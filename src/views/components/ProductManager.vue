@@ -27,7 +27,13 @@ import { fetchProducts, fetchCategories, fetchAndCache } from '../../utils/fetch
                 <argon-input v-model="item.ProductName" placeholder="商品名稱"/>
               </td>
               <td>
-                <self-select v-model="item.CategoryName" :options="categories"/>
+                <self-select 
+                  v-model="item.CategoryID" 
+                  :options="categories"
+                  @update:modelValue="() =>{
+                    item.CategoryName = categories[item.CategoryID];
+                    item.CategoryID = Number(item.CategoryID);
+                  }"/>
               </td>
               <td class="align-middle text-center">
                 <argon-input v-model.number="item.Price" placeholder="價格" type="number"/>
@@ -46,7 +52,7 @@ import { fetchProducts, fetchCategories, fetchAndCache } from '../../utils/fetch
         <form role="form" @submit.prevent="addItem">
           <argon-input v-model="newItem.ProductName" placeholder="商品名稱" isRequired/>
           <self-select v-model="newItem.CategoryName" :options="categories" defaultText="類別" isRequired/>
-          <argon-input v-model.number="newItem.Price" type="number" placeholder="價格" isRequired/>
+          <argon-input v-model.number="newItem.Price" type="number" placeholder="價格"/>
           <argon-button type="submit" color="primary">新增商品</argon-button>
           <!-- <button type="submit" class="btn btn-primary mt-2">新增商品</button> -->
         </form>
@@ -62,7 +68,7 @@ export default {
     return {
       origin_data: [], // 從資料庫獲取的原始資料
       items: [], // 用於展示的資料，包括新增的資料
-      categories: [],
+      categories: {},
       newItem: {
         ProductName: '',
         CategoryName: '',
@@ -80,12 +86,22 @@ export default {
       (async () => {
         this.origin_data = await fetchAndCache(fetchProducts, "Products");
         this.items = JSON.parse(JSON.stringify(this.origin_data));
+
+        this.items.sort((a, b) => {
+          if (a.CategoryID === b.CategoryID) {
+            return a.ProductID - b.ProductID;
+          } else {
+            return a.CategoryID - b.CategoryID;
+          }
+        });
       })();
     },
     fetchAndCacheCategories() {
       (async () => {
         const categories = await fetchAndCache(fetchCategories, "Categories");
-        this.categories = categories.map((category) => {return category.CategoryName});
+        categories.forEach((category) => {
+          this.categories[category.CategoryID] = category.CategoryName
+        });
       })();
     },
     addItem() {
@@ -144,6 +160,7 @@ export default {
           this.fetchAndCacheProducts();
         })
         .catch(error => {
+          alert('更新失敗');
           console.error('推送變更時出錯:', error);
         });
     },
@@ -151,6 +168,7 @@ export default {
   mounted() {
     this.fetchAndCacheProducts();
     this.fetchAndCacheCategories();
+    
   },
 };
 </script>

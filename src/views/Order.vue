@@ -7,21 +7,19 @@ import ArgonRadio from '../components/ArgonRadio.vue';
 import ProductsTable from './components/ProductsTable.vue';
 import PerformanceSelector from './components/PerformanceSelector.vue';
 import { fetchAndCache, fetchLoactions, fetchProducts, fetchPerformances } from '../utils/fetchData';
-import LocationInput from "@/components/LocationInput.vue"
 
 const orderTime = ref(new Date());
-const timeFormString = format(orderTime.value, "yyyy-MM-dd HH:mm");
+const timeFormString = (time) => format(time, "yyyy-MM-dd HH:mm");
 const performance = ref({
-        LocationID: null,
-        LocationName: null,
-        StartTime: null,
-        PerformanceID: null,
-        performanceName: ""
-      });
+  LocationID: null,
+  LocationName: null,
+  StartTime: null,
+  PerformanceID: null,
+  PerformanceName: ""
+});
 const numPerformance = ref(0);
 const notes = ref('');
 const locations = ref(null);
-const selectLocationID = ref();
 const products = ref(null);
 const showProductTable = ref(false);
 const showPerformanceSelector = ref(false);
@@ -129,6 +127,8 @@ const submitOrder = async () => {
     const result = await response.json();
     if (result.success) {
       console.log('Order submitted successfully', result.orderID);
+      if(isPerformanceStarted.value)
+        persistOrderSummary();
       initOrder();
       alert("新增訂單成功");    
     } else {
@@ -149,20 +149,12 @@ onMounted(async () => {
     numPerformance.value = await countPerformance();
     if (performanceData) {
       performance.value = JSON.parse(performanceData);
+      restorePerformanceState();
     }
   } catch (error) {
     console.error("Error loading data:", error);
   }
 });
-
-const selectLocations = (loc) => {
-  const selectedLocation = locations.value.find(l => l.LocationName === loc);
-  if (selectedLocation) {
-    selectLocationID.value = selectedLocation.LocationID;
-  } else {
-    throw new Error("Location Name is not found.");
-  }
-};
 
 const countPerformance = (async () => {
   try{
@@ -174,37 +166,87 @@ const countPerformance = (async () => {
   }
 });
 
+const isPerformanceStarted = computed(() => localStorage.getItem("Performance") !== null);
+
+// 擺攤時儲存訂單統計資料
+//  - totalRevenue: 累積的總金額
+//  - totalOrders: 累積的總訂單數
+//  - 以上資訊將會被儲存在 localStorage 中，以便下一次開啟時可以讀取
+const persistOrderSummary = () => {
+  const stats = JSON.parse(localStorage.getItem('marketStats')) || { totalRevenue: 0, totalOrders: 0 };
+
+  stats.totalRevenue += totalPrice.value;
+  stats.totalOrders += 1;
+
+  localStorage.setItem('marketStats', JSON.stringify(stats));
+};
+
+const elapsedTime = ref("");
+const restorePerformanceState = () => {
+  const savedData = JSON.parse(localStorage.getItem("Performance"));
+  if (savedData && savedData.StartTime) {
+    performance.value.StartTime = new Date(savedData.StartTime);
+    isPerformanceStarted.value = true;
+    startElapsedTimeCounter(); // Start the timer
+  }
+};
+const startElapsedTimeCounter = () => {
+  return setInterval(() => {
+    const now = new Date();
+    const diff = now - performance.value.StartTime;
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = ((diff % 60000) / 1000).toFixed(0);
+    elapsedTime.value = `${hours}小時 ${minutes}分 ${seconds}秒`;
+  }, 1000);
+};
+const marketStats = computed(() => {
+  const stats = JSON.parse(localStorage.getItem('marketStats')) || { totalRevenue: 0, totalOrders: 0 };
+
+  return {
+    totalRevenue: stats.totalRevenue,
+    totalOrders: stats.totalOrders,
+    duration: elapsedTime.value,
+  };
+});
+
+
 </script>
 
 <template>
   <div class="py-4 container-fluid">
     <div class="row">
       <div class="col-md-8">
+        <div v-if="isPerformanceStarted" class="card mb-2">
+          <div class="card-header pb-0">
+            <b class="mb-0">擺攤資訊</b>
+          </div>
+          <div class="card-body">
+            <div class="align-items-center">
+              <div>擺攤持續時間：{{ marketStats.duration }}</div>
+              <div>總收入：{{ marketStats.totalRevenue }} 元</div>
+              <div>訂單數：{{ marketStats.totalOrders }}</div>
+            </div>
+          </div>
+        </div>
         <div class="card">
           <div class="card-header pb-0">
             <div class="d-flex align-items-center">
-              <p class="mb-0">新增訂單</p>
+              <b class="mb-0">新增訂單</b>
             </div>
           </div>
           <div class="card-body">
             <div class="row">
               <div class="col-md-6">
                 <label for="order-time" class="form-control-label">訂單時間</label>
-                <argon-input type="datetime-local" :modelValue="timeFormString" />
-                <!-- 表演場次選擇 -->
-                <label for="performance" class="form-control-label">表演場次</label>
+                <argon-input type="datetime-local" :modelValue="timeFormString(orderTime)" />
+                <!-- 擺攤場次選擇 -->
+                <label for="performance" class="form-control-label">擺攤場次</label>
                 <argon-input
                   type="text"
                   v-model="performance.PerformanceName"
                   isReadOnly
                   @click="() => {showPerformanceSelector = true}"
-                />
-              </div>
-              <div class="col-md-6">
-                <location-input
-                  :locations="locations"
-                  @locationSelected="selectLocations"
-                  @typingLocation="(loc) => {inputText = loc}"
                 />
               </div>
               <div class="col-md-12">
@@ -277,7 +319,7 @@ const countPerformance = (async () => {
         </div>
       </div>
     </div>
-    <!-- 表演場次選擇彈窗 -->
+    <!-- 擺攤場次選擇彈窗 -->
     <performance-selector
       :fetchFunction="fetchPerformances"
       :dataSize="numPerformance"
