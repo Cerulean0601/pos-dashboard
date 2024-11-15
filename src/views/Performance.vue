@@ -35,11 +35,13 @@ const startElapsedTimeCounter = () => {
   intervalId = setInterval(() => {
     const now = new Date();
     const diff = now - performanceStartTime.value;
-    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
     const seconds = ((diff % 60000) / 1000).toFixed(0);
-    elapsedTime.value = `${minutes}分 ${seconds}秒`;
+    elapsedTime.value = `${hours}小時 ${minutes}分 ${seconds}秒`;
   }, 1000);
 };
+
 
 const inputText = ref('');
 
@@ -127,7 +129,7 @@ const startPerformance = () => {
   const validLocation = locations.value.find(loc => loc.LocationName === inputText.value);
 
   if (selectLocationID.value === null || !validLocation) {
-    alert("請新增表演地點或從列表中選擇");
+    alert("請新增擺攤地點或從列表中選擇");
     return;
   }
 
@@ -155,7 +157,7 @@ const startPerformance = () => {
         LocationName: validLocation.LocationName,
         StartTime: StartTime,
         PerformanceID: PerformanceID,
-        performanceName: performanceName(StartTime, validLocation.LocationName)
+        PerformanceName: performanceName(StartTime, validLocation.LocationName)
       }));
       startElapsedTimeCounter();
     })
@@ -173,7 +175,7 @@ const startPerformance = () => {
 const endPerformance = () => {
   const performanceData = JSON.parse(localStorage.getItem("Performance"));
   if (!performanceData || !performanceData.PerformanceID) {
-    alert("未找到有效的 PerformanceID，無法結束表演");
+    alert("擺攤尚未開始，無法結束擺攤");
     return;
   }
 
@@ -201,7 +203,7 @@ const endPerformance = () => {
   if (intervalId) clearInterval(intervalId); // Stop the timer
   localStorage.removeItem("Performance"); // Clear state from localStorage
   localStorage.removeItem("Locations");
-  alert("表演已結束");
+  alert("擺攤已結束");
 };
 
 // Function to handle location selection from the LocationInput component
@@ -223,7 +225,7 @@ const selectLocations = (location) => {
       <div class="col-md-8">
         <div class="card">
           <div class="card-header pb-0">
-            <p class="mb-0">表演場地</p>
+            <p class="mb-0">擺攤場地</p>
           </div>
           <div class="card-body">
             <div class="row">
@@ -235,47 +237,55 @@ const selectLocations = (location) => {
                 />
               </div>
             </div>
-            <argon-button
-              color="primary"
-              size="sm"
-              @click="insertLocation"
-            >
-              新增場地
-            </argon-button>
-            <argon-button
-              color="danger"
-              size="sm"
-              @click="deleteLocation"
-            >
-              刪除場地
-            </argon-button>
-            <argon-button
-              color="success"
-              size="sm"
-              @click="startPerformance"
-              :disabled="isPerformanceStarted"
-            >
-              表演開始
-            </argon-button>
-            <argon-button
-              color="danger"
-              size="sm"
-              v-if="isPerformanceStarted"
-              @click="endPerformance"
-            >
-              表演結束
-            </argon-button>
+            <div v-if="!isPerformanceStarted">
+              <argon-button
+                class="m-1"
+                color="primary"
+                size="sm"
+                @click="insertLocation"
+              >
+                新增場地
+              </argon-button>
+              <argon-button
+                class="m-1"
+                color="danger"
+                size="sm"
+                @click="deleteLocation"
+              >
+                刪除場地
+              </argon-button>
+              <br />
+              <argon-button
+                class="m-1"
+                color="success"
+                size="sm"
+                @click="startPerformance"
+                :disabled="isPerformanceStarted"
+              >
+                擺攤開始
+              </argon-button>
+            </div>
+            <div v-else>
+              <argon-button
+                class="m-1"
+                color="danger"
+                size="sm"
+                @click="endPerformance"
+              >
+                擺攤結束
+              </argon-button>
+            </div>
           </div>
         </div>
       </div>
       <div class="col-md-4" v-if="isPerformanceStarted">
         <div class="card">
           <div class="card-header pb-0">
-            <p class="mb-0">表演資訊</p>
+            <p class="mb-0">擺攤資訊</p>
           </div>
           <div class="card-body">
-            <p>表演開始時間：{{ performanceStartTime?.toLocaleString() }}</p>
-            <p>表演地點: {{ selectLocationID !== null ? locations.find(loc => loc.LocationID === selectLocationID)?.LocationName : '未選擇' }}</p>
+            <p>擺攤開始時間：{{ performanceStartTime?.toLocaleString() }}</p>
+            <p>擺攤地點: {{ selectLocationID !== null ? locations.find(loc => loc.LocationID === selectLocationID)?.LocationName : '未選擇' }}</p>
             <p>已進行時間：{{ elapsedTime }}</p>
           </div>
         </div>

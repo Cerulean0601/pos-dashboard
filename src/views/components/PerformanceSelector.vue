@@ -50,7 +50,7 @@ const close = () => {
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">選擇表演場次</h5>
+          <h5 class="modal-title">選擇擺攤場次</h5>
         </div>
         <div class="modal-body">
           <ul class="list-group mb-3">
