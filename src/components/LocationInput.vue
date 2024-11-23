@@ -8,7 +8,7 @@
 		locations: {
 			type: Array,
 			required: true,
-		
+			default: () => [],
 		},
   });
   

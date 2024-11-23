@@ -1,4 +1,5 @@
 import { createStore } from "vuex";
+import performance from "../modules/performance";
 
 export default createStore({
   state: {
@@ -51,4 +52,7 @@ export default createStore({
     },
   },
   getters: {},
+  modules: {
+    performance,
+  },
 });

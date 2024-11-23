@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useStore } from 'vuex';
 import { format } from 'date-fns';
 import ArgonInput from "@/components/ArgonInput.vue";
 import ArgonButton from "@/components/ArgonButton.vue";
@@ -8,16 +9,10 @@ import ProductsTable from './components/ProductsTable.vue';
 import PerformanceSelector from './components/PerformanceSelector.vue';
 import { fetchAndCache, fetchLoactions, fetchProducts, fetchPerformances } from '../utils/fetchData';
 
+const store = useStore(); // 使用 Vuex
 const orderTime = ref(new Date());
 const timeFormString = (time) => format(time, "yyyy-MM-dd HH:mm");
-const performance = ref({
-  LocationID: null,
-  LocationName: null,
-  StartTime: null,
-  PerformanceID: null,
-  PerformanceName: ""
-});
-const numPerformance = ref(0);
+
 const notes = ref('');
 const locations = ref(null);
 const products = ref(null);
@@ -26,10 +21,10 @@ const showPerformanceSelector = ref(false);
 const selectedProductIndex = ref(null);
 const selectedPaymentMethod = ref('');
 const paymentMethods = ref({
-    "crash": "現金",
-    "linepay": "LinePay",
-    "jkopay": "街口支付",
-  });
+  crash: "現金",
+  linepay: "LinePay",
+  jkopay: "街口支付",
+});
 
 // 訂單品項資訊
 const orderProducts = ref([
@@ -37,13 +32,14 @@ const orderProducts = ref([
   { ProductName: '', ProductID: null, Quantity: 1, Price: null }
 ]);
 
+const performance = computed(() => store.state.performance.performance);
+const isPerformanceStarted = computed(() => store.getters['performance/isPerformanceStarted']);
+const elapsedTime = computed(() => store.state.performance.elapsedTime);
+
 // 計算訂單總價
 const totalPrice = computed(() => {
-  return orderProducts.value.reduce((total, product) => {
-    // product price 已經是品項的總價，不需要乘上數量
-    return total + (product.Price || 0); 
-  }, 0);
-})
+  return orderProducts.value.reduce((total, product) => total + (product.Price || 0), 0);
+});
 
 // 新增一個品項
 const addOrderProduct = () => {
@@ -61,6 +57,7 @@ const selectProduct = (product) => {
     showProductTable.value = false;
   }
 };
+
 // 初始化訂單
 const initOrder = () => {
   orderTime.value = new Date();
@@ -69,54 +66,45 @@ const initOrder = () => {
     { ProductName: '', ProductID: null, Quantity: 1, Price: null },
     { ProductName: '', ProductID: null, Quantity: 1, Price: null }
   ];
-}
+};
 
 // 更新品項總價
 const updateProductTotalPrice = (index) => {
   const orderProduct = orderProducts.value[index];
-  const updateProdcut = products.value.find(p => p.ProductID === orderProduct.ProductID);
-  if (updateProdcut && updateProdcut.Price !== null) {
-    orderProduct.Price = orderProduct.Quantity * updateProdcut.Price;
+  const updateProduct = products.value.find(p => p.ProductID === orderProduct.ProductID);
+  if (updateProduct && updateProduct.Price !== null) {
+    orderProduct.Price = orderProduct.Quantity * updateProduct.Price;
   }
 };
 
 // 提交訂單
 const submitOrder = async () => {
-  if(notes.value.length > 255)
+  if (notes.value.length > 255) {
     alert("備註不能超過255個字");
+    return;
+  }
 
   orderProducts.value = orderProducts.value.filter(
     (product) => product.ProductName.trim() !== ""
   );
 
-  const invalidProducts = [];
-  orderProducts.value.forEach((product) => {
-    const isValid = products.value.some(
-      (p) => p.ProductName === product.ProductName
-    );
-
-    if (!isValid) {
-      invalidProducts.push(product.ProductName);
-    }
+  const invalidProducts = orderProducts.value.filter(product => {
+    return !products.value.some(p => p.ProductID === product.ProductID);
   });
 
   if (invalidProducts.length > 0) {
-    alert(`以下商品名稱無效：${invalidProducts.join(", ")}`);
+    alert(`以下商品名稱無效：${invalidProducts.map(p => p.ProductName).join(", ")}`);
     return;
   }
 
   const orderData = {
     OrderTime: orderTime.value,
     Notes: notes.value,
-    PaymentMethod: selectedPaymentMethod.value,
+    PaymentMethod: selectedPaymentMethod,
     OrderProducts: orderProducts.value,
+    PerformanceID: performance.value.PerformanceID || null,
   };
-  
-  if(performance.value){
-    if(performance.value.PerformanceID)
-      orderData.PerformanceID = performance.value.PerformanceID;
-  }
-  console.log(orderData);
+
   try {
     const response = await fetch('/api/postgres/order/insert', {
       method: 'POST',
@@ -127,10 +115,11 @@ const submitOrder = async () => {
     const result = await response.json();
     if (result.success) {
       console.log('Order submitted successfully', result.orderID);
-      if(isPerformanceStarted.value)
-        persistOrderSummary();
+      if (isPerformanceStarted.value) {
+        store.commit('performance/addOrder', totalPrice.value); // 更新訂單統計
+      }
       initOrder();
-      alert("新增訂單成功");    
+      alert("新增訂單成功");
     } else {
       console.error('Failed to submit order:', result.message);
       alert("訂單新增失敗");
@@ -145,71 +134,11 @@ onMounted(async () => {
   try {
     locations.value = await fetchAndCache(fetchLoactions, "Locations");
     products.value = await fetchAndCache(fetchProducts, "Products");
-    const performanceData = localStorage.getItem("Performance");
-    numPerformance.value = await countPerformance();
-    if (performanceData) {
-      performance.value = JSON.parse(performanceData);
-      restorePerformanceState();
-    }
+    store.dispatch('performance/loadPerformance'); // 從 Vuex 恢復表演狀態
   } catch (error) {
     console.error("Error loading data:", error);
   }
 });
-
-const countPerformance = (async () => {
-  try{
-    const response = await fetch(`/api/postgres/performance/count`);
-    const rows = await response.json();
-    return parseInt(rows[0].count);
-  } catch (error) {
-    console.error("Error Counting Performance:", error);
-  }
-});
-
-const isPerformanceStarted = computed(() => localStorage.getItem("Performance") !== null);
-
-// 擺攤時儲存訂單統計資料
-//  - totalRevenue: 累積的總金額
-//  - totalOrders: 累積的總訂單數
-//  - 以上資訊將會被儲存在 localStorage 中，以便下一次開啟時可以讀取
-const persistOrderSummary = () => {
-  const stats = JSON.parse(localStorage.getItem('marketStats')) || { totalRevenue: 0, totalOrders: 0 };
-
-  stats.totalRevenue += totalPrice.value;
-  stats.totalOrders += 1;
-
-  localStorage.setItem('marketStats', JSON.stringify(stats));
-};
-
-const elapsedTime = ref("");
-const restorePerformanceState = () => {
-  const savedData = JSON.parse(localStorage.getItem("Performance"));
-  if (savedData && savedData.StartTime) {
-    performance.value.StartTime = new Date(savedData.StartTime);
-    isPerformanceStarted.value = true;
-    startElapsedTimeCounter(); // Start the timer
-  }
-};
-const startElapsedTimeCounter = () => {
-  return setInterval(() => {
-    const now = new Date();
-    const diff = now - performance.value.StartTime;
-    const hours = Math.floor(diff / 3600000);
-    const minutes = Math.floor((diff % 3600000) / 60000);
-    const seconds = ((diff % 60000) / 1000).toFixed(0);
-    elapsedTime.value = `${hours}小時 ${minutes}分 ${seconds}秒`;
-  }, 1000);
-};
-const marketStats = computed(() => {
-  const stats = JSON.parse(localStorage.getItem('marketStats')) || { totalRevenue: 0, totalOrders: 0 };
-
-  return {
-    totalRevenue: stats.totalRevenue,
-    totalOrders: stats.totalOrders,
-    duration: elapsedTime.value,
-  };
-});
-
 
 </script>
 
@@ -223,9 +152,9 @@ const marketStats = computed(() => {
           </div>
           <div class="card-body">
             <div class="align-items-center">
-              <div>擺攤持續時間：{{ marketStats.duration }}</div>
-              <div>總收入：{{ marketStats.totalRevenue }} 元</div>
-              <div>訂單數：{{ marketStats.totalOrders }}</div>
+              <div>擺攤持續時間：{{ elapsedTime }}</div>
+              <div>總收入：{{ store.state.performance.statsOrders.totalRevenue }} 元</div>
+              <div>訂單數：{{ store.state.performance.statsOrders.totalOrders }}</div>
             </div>
           </div>
         </div>
