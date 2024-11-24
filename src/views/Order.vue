@@ -180,7 +180,7 @@ onMounted(async () => {
               </div>
               <div class="col-md-12">
                 <label for="notes" class="form-control-label">備註</label>
-                <argon-input type="text" v-model="notes" />
+                <argon-input type="text" v-model="notes" placeholder="商品選擇客製品後，可在這裡輸入客製品名稱"/>
               </div>
             </div>
 

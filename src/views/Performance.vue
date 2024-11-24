@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, $router } from 'vue';
 import { useStore } from 'vuex';
 import ArgonButton from "@/components/ArgonButton.vue";
 import LocationInput from "@/components/LocationInput.vue";
@@ -97,10 +97,14 @@ const startPerformance = () => {
   }
 
   store.dispatch('performance/startPerformance', selectedLocation);
+  $router.push({ name: 'Order' });
 };
 
 // End the performance
 const endPerformance = () => {
+  const { totalRevenue, totalOrders } = store.state.performance.statsOrders;
+  const alertMsg = `已結束擺攤\n總收入: ${totalRevenue}\n總訂單數: ${totalOrders}`;
+  alert(alertMsg);
   store.dispatch('performance/endPerformance');
 };
 </script>

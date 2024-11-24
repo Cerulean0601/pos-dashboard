@@ -71,7 +71,7 @@ const actions = {
     });
     localStorage.removeItem('Performance');
   },
-  startPerformance({ state, dispatch }, location) {
+  async startPerformance({ state, dispatch }, location) {
     state.performance.StartTime = new Date();
     state.performance.LocationID = location.LocationID;
     state.performance.LocationName = location.LocationName;
@@ -85,7 +85,7 @@ const actions = {
       'PerformanceName': null
     }
 
-    fetch("/api/postgres/performance/start", {
+    await fetch("/api/postgres/performance/start", {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -111,7 +111,30 @@ const actions = {
         alert('操作失敗');
       });
   },
-  endPerformance({ state, commit }) {
+  async endPerformance({ state, commit }) {
+    if (!state.performance.PerformanceID) {
+      console.error('PerformanceID not found.');
+      return;
+    }
+
+    const EndTime = new Date().toISOString();
+    await fetch("/api/postgres/performance/end", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        PerformanceID: state.performance.PerformanceID,
+        EndTime: EndTime
+      })
+    })
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        console.log("Performance ended");
+      })
+      .catch(error => {
+        console.error('Error sending performance end request:', error);
+        alert('操作失敗，無法更新結束時間');
+      });
+
     localStorage.removeItem('Performance');
     commit('setPerformance', {
       LocationID: null,
